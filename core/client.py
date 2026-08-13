@@ -1,19 +1,46 @@
 import httpx
-from .auth import get_headers
+from .auth import auth_manager
 
 class SunoClient:
     def __init__(self):
         self.app_url = "https://app.suno.ai"
         
-    def _post(self, path: str, json_data: dict) -> dict:
+    def _execute_with_retry(self, method: str, path: str, **kwargs) -> dict:
+        """
+        Executes an HTTP request with automatic self-healing.
+        If a 401 Unauthorized is hit, it forces a JWT refresh and replays the request.
+        """
+        url = f"{self.app_url}{path}"
+        
         with httpx.Client(timeout=30.0) as client:
-            resp = client.post(f"{self.app_url}{path}", headers=get_headers(), json=json_data)
-            return resp.json() if resp.status_code in (200, 201) else {"error": resp.text}
+            # First Attempt
+            resp = client.request(method, url, headers=auth_manager.get_headers(), **kwargs)
+            
+            # Catch Expired/Invalid Token
+            if resp.status_code == 401:
+                print(f"[Client] Caught 401 Unauthorized on {path}. Forcing JWT refresh...")
+                success = auth_manager._refresh_token()
+                
+                if success:
+                    print(f"[Client] Replaying request to {path} with new token...")
+                    # Second Attempt (Replay)
+                    resp = client.request(method, url, headers=auth_manager.get_headers(), **kwargs)
+                else:
+                    return {"error": "Authentication failed. 401 Unauthorized and token refresh failed."}
+                    
+            if resp.status_code in (200, 201):
+                return resp.json()
+            else:
+                return {
+                    "error": f"HTTP {resp.status_code}",
+                    "details": resp.text
+                }
+
+    def _post(self, path: str, json_data: dict) -> dict:
+        return self._execute_with_retry("POST", path, json=json_data)
             
     def _get(self, path: str) -> dict:
-        with httpx.Client(timeout=15.0) as client:
-            resp = client.get(f"{self.app_url}{path}", headers=get_headers())
-            return resp.json() if resp.status_code == 200 else {"error": resp.text}
+        return self._execute_with_retry("GET", path)
 
     def get_credits(self):
         return self._get("/api/billing/info/")
