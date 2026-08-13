@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 # Load the .env file automatically from the project root directory
 env_path = Path(__file__).parent.parent / ".env"
-load_dotenv(dotenv_path=env_path)
+load_dotenv(dotenv_path=env_path, override=True)
 
 class ClerkAuthManager:
     """

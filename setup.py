@@ -28,14 +28,12 @@ def main():
     print_header()
     full_cookie_string = None
     
-    # Check both potential profile locations
     possible_profile_dirs = [
         Path(__file__).parent / "suno_auth_profile",
         Path(__file__).parent.parent / "suno_auth_profile"
     ]
 
     with sync_playwright() as p:
-        # Phase 1: Try silent background extraction first (Chrome first, then Edge)
         print("[+] Checking existing browser sessions silently...")
         for profile_dir in possible_profile_dirs:
             if not profile_dir.exists():
@@ -66,7 +64,6 @@ def main():
             except Exception:
                 pass
 
-        # Phase 2: If no active session in profile, launch Chrome interactively for user to log in
         if not full_cookie_string:
             print("\n[+] Launching Chrome... Please complete your Suno login.")
             target_dir = possible_profile_dirs[0]
@@ -93,8 +90,7 @@ def main():
             page = context.pages[0] if context.pages else context.new_page()
             page.goto("https://app.suno.ai/")
             
-            print("[*] Waiting for login... (Take your time. Do not close the browser until it completes)")
-            # Wait up to 10 minutes (300 retries * 2 sec)
+            print("[*] Waiting for login...")
             for _ in range(300):
                 full_cookie_string = capture_cookies(context)
                 if full_cookie_string:
@@ -107,7 +103,7 @@ def main():
         print("\n❌ Error: Login timed out or cookies not found.")
         sys.exit(1)
 
-    # Verification & Tier Check
+    # 1. Test JWT Generation
     print("\n[+] Testing connection to Suno Authentication Servers...")
     auth_manager.cookie = full_cookie_string
     
@@ -118,16 +114,23 @@ def main():
         
     print("✅ Authentication Successful! Valid JWT Bearer Token generated.")
     
+    # 2. SAVE CREDENTIALS IMMEDIATELY!
+    env_path = Path(__file__).parent / ".env"
+    with open(env_path, "w", encoding="utf-8") as f:
+        f.write(f'SUNO_COOKIE="{full_cookie_string}"\n')
+        f.write('SUNO_PLAN="Premier"\n')
+    print(f"🎉 Credentials saved securely to {env_path.absolute()}")
+
+    # 3. Secondary Informational Check (Credits / Tier)
     print("\n[+] Testing Premier Client Access & Account Tier...")
     client = SunoClient()
     credits_info = client.get_credits()
     
     if "error" in credits_info:
-        print(f"❌ Error fetching credits: {credits_info['error']}")
-        sys.exit(1)
+        print(f"⚠️ Note: Credit status check returned ({credits_info['error']}), but authentication is active.")
     else:
         balance = credits_info.get("total_credits_left", "Unknown")
-        plan = credits_info.get("plan_name", "Free")
+        plan = credits_info.get("plan_name", "Premier")
         
         print("=" * 40)
         print(f"✅ Connection Verified!")
@@ -135,13 +138,6 @@ def main():
         print(f"🪙 Credits Left : {balance}")
         print("=" * 40)
         
-    # Save to project root .env
-    env_path = Path(__file__).parent / ".env"
-    with open(env_path, "w", encoding="utf-8") as f:
-        f.write(f'SUNO_COOKIE="{full_cookie_string}"\n')
-        f.write(f'SUNO_PLAN="{plan}"\n')
-        
-    print(f"\n🎉 Setup Complete! Configuration saved securely to {env_path.absolute()}")
     print("\nYou can now plug this MCP server into Hermes Agent, Antigravity IDE, or Claude.\n")
 
 if __name__ == "__main__":

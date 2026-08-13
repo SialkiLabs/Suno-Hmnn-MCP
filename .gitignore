@@ -4,4 +4,6 @@ __pycache__/
 .venv
 env/
 venv/
+suno_auth_profile/
 music-outputs/
+*.db
