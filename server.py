@@ -32,6 +32,15 @@ def suno_get_clip(clip_id: str) -> dict:
     return client.get_clip(clip_id)
 
 @mcp.tool()
+def suno_download_file(audio_url: str, filename: str, file_format: str = "wav") -> dict:
+    """
+    Download high-fidelity WAV, MP3, or Stems to local storage directory.
+    Uses the daw_exporter to safely save binary audio.
+    """
+    from core.daw_exporter import download_audio_file
+    return download_audio_file(audio_url, filename, file_format)
+
+@mcp.tool()
 def suno_auth_status() -> dict:
     """Check the health of the Token Rotation Engine."""
     from core.auth import auth_manager
