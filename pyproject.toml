@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "suno-hmnn-mcp"
+version = "1.0.0"
+description = "Production-grade, self-healing FastMCP server bridging Suno Premier to Hermes, Antigravity IDE, Cursor, and Claude."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "George AK Neihsial" }
+]
+keywords = ["suno-ai", "mcp", "fastmcp", "ai-music", "hermes-agent", "cursor-ide", "claude-desktop"]
+dependencies = [
+    "httpx>=0.28.0",
+    "mcp>=1.0.0",
+    "python-dotenv>=1.0.0",
+    "playwright>=1.40.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/appeebaareecloudinfo-hash/Suno-Hmnn-MCP"
+Repository = "https://github.com/appeebaareecloudinfo-hash/Suno-Hmnn-MCP"

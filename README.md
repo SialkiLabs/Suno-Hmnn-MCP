@@ -145,7 +145,7 @@ playwright install chromium
 ### 3. Run the Automated Auth Portal
 Launch the frictionless login wizard:
 ```bash
-python setup.py
+python wizard.py
 ```
 
 * **What happens:**
@@ -237,6 +237,16 @@ C:\Users\YourName\hermy-hq\music-outputs\
 **Importing into DAWs:**
 1. **Ableton Live / FL Studio / Reaper / Logic Pro**: Drag `cyberpunk_vocals.wav` and `cyberpunk_instrumental.wav` into separate audio tracks.
 2. Apply local EQ, compression, or sidechaining to mix Suno vocals with your custom instrument tracks.
+
+---
+
+## 🛡️ Security & Code Auditability Guarantee
+
+`Suno-Hmnn-MCP` is engineered with an uncompromising commitment to privacy and open-source transparency:
+* **100% Local Air-Gap**: Zero data, tokens, or cookies are ever transmitted to any third-party telemetry, analytics, or external server.
+* **Direct Official Endpoints**: All network communications occur exclusively between your local PC (`127.0.0.1`) and Suno's official domain (`suno.com` / `clerk.suno.com`).
+* **Non-Invasive Setup**: The interactive `wizard.py` script runs strictly in user-space and requires **no administrator/root privileges**.
+* **Auditable Codebase**: Every single line of network and state management code is open-source, readable, and under 500 lines of standard Python (`core/auth.py`, `core/client.py`).
 
 ---
 
