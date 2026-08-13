@@ -132,7 +132,7 @@ Diagnostic tool that reports the health of the Clerk Token Rotation Engine and r
 
 ### 1. Clone & Set Up Directory
 ```bash
-git clone https://github.com/appeebaareecloudinfo-hash/Suno-Hmnn-MCP.git
+git clone https://github.com/SialkiLabs/Suno-Hmnn-MCP.git
 cd Suno-Hmnn-MCP
 ```
 
