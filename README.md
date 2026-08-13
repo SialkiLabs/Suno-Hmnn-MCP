@@ -1,4 +1,4 @@
-# Suno Premier Studio OS
+# Suno-Hmnn-MCP
 
 A local, zero-cost FastMCP server granting Hermes Agent, Antigravity IDE, and Claude full programmatic access to Suno Premier features (v4 models, stems, exact-timestamp extensions, and uncompressed WAV downloads).
 
@@ -19,7 +19,7 @@ A local, zero-cost FastMCP server granting Hermes Agent, Antigravity IDE, and Cl
   "mcpServers": {
     "suno-premier": {
       "command": "python",
-      "args": ["/absolute/path/to/suno-premier-studio-os/server.py"],
+      "args": ["/absolute/path/to/Suno-Hmnn-MCP/server.py"],
       "env": {
         "SUNO_SESSION_TOKEN": "YOUR_JWT",
         "SUNO_COOKIE": "YOUR_COOKIE"

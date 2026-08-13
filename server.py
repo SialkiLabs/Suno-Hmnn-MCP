@@ -3,7 +3,7 @@ from mcp.server.fastmcp import FastMCP
 from core.client import SunoClient
 from core.auth import get_headers
 
-mcp = FastMCP("suno-premier-studio-os")
+mcp = FastMCP("Suno-Hmnn-MCP")
 client = SunoClient()
 
 @mcp.tool()
