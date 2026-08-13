@@ -3,31 +3,47 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![MCP Standard](https://img.shields.io/badge/MCP-1.0.0-green.svg)](https://modelcontextprotocol.io/)
-[![FastMCP](https://img.shields.io/badge/FastMCP-Supported-000000.svg)](https://gofastmcp.com)
+[![FastMCP Engine](https://img.shields.io/badge/FastMCP-Supported-000000.svg)](https://gofastmcp.com)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+[![Architecture: Self--Healing](https://img.shields.io/badge/Auth-Self--Healing%20Clerk%20JWT-purple.svg)](#-architecture-overview)
 
-> **Suno-Hmnn-MCP** is an enterprise-grade, local, self-healing Model Context Protocol (MCP) server that seamlessly bridges **Suno AI (v4/v3.5)** directly into **Hermes Agent App**, **Antigravity IDE**, **Cursor**, **Claude Desktop**, and custom web applications.
-
----
-
-### 🌟 Community Initiative & Authorship
-**Created & Maintained by:** **George AK Neihsial**  
-*An open-source welfare initiative dedicated to providing developers, creators, and AI research communities with robust, zero-cost, user-friendly bridges between cutting-edge generative tools and local AI agents.*
+> **Suno-Hmnn-MCP** is an enterprise-grade, local, self-healing Model Context Protocol (MCP) framework that bridges **Suno AI (v4/v3.5)** directly into **Hermes Agent App**, **Antigravity IDE**, **Cursor**, **Claude Desktop**, **VS Code**, and local REST API services.
 
 ---
 
-## 🚀 Key Features
+### 🌟 Community Initiative & Developer Credit
+**Lead Architect & Author:** **George AK Neihsial**  
+*An open-source welfare initiative created to provide developers, creators, prompt engineers, and AI research communities with a robust, zero-cost, user-friendly bridge between cutting-edge generative audio platforms and local autonomous AI agents.*
 
-* **Zero Third-Party API Charges**: Operates using your existing native Suno Premier/Pro subscription with **zero middleman fees** or per-call charges.
-* **Frictionless "Sign In" Wizard (`setup.py`)**: Uses native Chrome/Edge automation to capture authentic session cookies. **No manual copying of Developer Tools cookies required.**
-* **Dual-Layer Token Rotation Engine**: Dynamically exchanges long-lived session cookies for short-lived, high-speed **Clerk Bearer JWTs**, delivering native API performance.
-* **Self-Healing Request Middleware**: Intercepts `401 Unauthorized` responses mid-generation, silently refreshes JWT tokens on the fly, and replays requests without interrupting AI agent tasks.
-* **Full Premier Studio Suite**:
-  * **Custom Mode Generation**: `chirp-v4` and `chirp-v3-5` models with custom lyrics, style tags, and titles.
-  * **Precision Timestamp Extensions**: Extend clips at exact millisecond timestamps (`continue_at`).
-  * **Premier Stem Separation**: Isolate vocals and backing instrumentals into separate stems.
-* **DAW Audio Exporter**: Automatically downloads uncompressed 24-bit `.wav` files and stems directly to your local project folder.
-* **Local SQLite State Tracker (`studio_os.db`)**: Provides long-term memory for AI agents by logging clip IDs, prompts, tags, and local file locations.
+---
+
+## 📋 Table of Contents
+1. [Why Suno-Hmnn-MCP? (Comparison Matrix)](#-why-suno-hmnn-mcp-comparison-matrix)
+2. [Architecture Overview](#-architecture-overview)
+3. [Exhaustive Function & Tool Reference](#-exhaustive-function--tool-reference)
+4. [Step-by-Step Installation Tutorial](#-step-by-step-installation-tutorial)
+5. [Client Integration Guide (Hermes, Antigravity, Claude, Cursor)](#-client-integration-guide)
+6. [Complete Music Production Workflow Guide](#-complete-music-production-workflow-guide)
+7. [DAW Import & Stem Isolation (Ableton, FL Studio, Reaper)](#-daw-import--stem-isolation)
+8. [Comprehensive FAQ & Security Deep-Dive](#-comprehensive-faq--security-deep-dive)
+9. [Troubleshooting Guide](#-troubleshooting-guide)
+10. [License & Authorship](#-license--authorship)
+
+---
+
+## ⚡ Why Suno-Hmnn-MCP? (Comparison Matrix)
+
+| Feature | Standard Open-Source Script | Paid API Wrappers (e.g. AceData) | **Suno-Hmnn-MCP** |
+| :--- | :---: | :---: | :---: |
+| **Cost** | Free (Fragile) | $0.02 - $0.05 / song | **100% FREE (Uses your plan)** |
+| **Authentication** | Manual DevTools Cookie Paste | Paid API Key | **Automated Playwright Portal** |
+| **Token Expiry Handling** | Crashes on 401 | N/A | **Self-Healing Clerk JWT Refresh** |
+| **Model Support** | Basic v3 | v3 / v4 | **Native v4 & v3.5 Support** |
+| **Audio Quality** | Low-res MP3 | MP3 / WAV | **Uncompressed 24-bit WAV & MP3** |
+| **Stem Isolation** | ❌ No | Extra Fee | **Native Premier Vocal/Backing Stems** |
+| **Precision Extension** | ❌ No | Limited | **Millisecond Timestamp Extensions** |
+| **State Tracking** | Memory Only | Cloud Database | **Local SQLite Engine (`studio_os.db`)** |
+| **Local Privacy** | Partial | No (Third-party servers) | **100% Local Desktop Air-Gap** |
 
 ---
 
@@ -41,15 +57,15 @@
                                                     │ Standard MCP (stdio / HTTP)
                                                     ▼
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                       SUNO-HMNN-MCP SERVER                                             │
+│                                       SUNO-HMNN-MCP FRAMEWORK                                          │
 │                                                                                                        │
 │  ┌───────────────────────────────┐  ┌───────────────────────────────┐  ┌─────────────────────────────┐  │
 │  │ Clerk Token Rotation Engine   │  │ Self-Healing HTTP Middleware  │  │ Local SQLite State Tracker  │  │
-│  │  • Session Cookie Backup      │  │  • Catches 401 Unauthorized   │  │  • Clip History & Prompts   │  │
-│  │  • Dynamic Bearer JWT Mint    │  │  • Transparent Request Replay │  │  • Local WAV File Paths     │  │
+│  │  • Full Cookie Bundle Vault   │  │  • Intercepts 401 Unauthorized│  │  • Track History & Prompts  │  │
+│  │  • Dynamic Bearer JWT Mint    │  │  • Silent Request Replay      │  │  • Local File Indexing      │  │
 │  └───────────────────────────────┘  └───────────────────────────────┘  └─────────────────────────────┘  │
 └───────────────────────────────────────────────────┬────────────────────────────────────────────────────┘
-                                                    │ Authenticated HTTPS
+                                                    │ Authenticated HTTPS / REST
                                                     ▼
                                        ┌─────────────────────────┐
                                        │   Suno.com / Clerk API  │
@@ -58,41 +74,91 @@
 
 ---
 
-## 📦 Installation & Quick Start
+## 🧰 Exhaustive Function & Tool Reference
+
+`Suno-Hmnn-MCP` exposes 7 production-grade tools directly to your AI Agents:
+
+### 1. `suno_generate`
+Generates original music tracks using custom lyrics or prompt descriptions.
+* **Parameters:**
+  * `prompt` (*string*): Descriptive prompt for song style or theme.
+  * `tags` (*string*): Music genres, instruments, or vocal styles (e.g. `"synthwave, energetic, female vocal"`).
+  * `title` (*string*): Song title.
+  * `make_instrumental` (*boolean*): If `true`, removes all vocals.
+  * `model_version` (*string*): `"chirp-v4"` (Default) or `"chirp-v3-5"`.
+  * `custom_lyrics` (*string*): Custom structured lyrics (with `[Verse]`, `[Chorus]` tags).
+
+### 2. `suno_extend`
+Extends an existing track starting from an exact timestamp.
+* **Parameters:**
+  * `clip_id` (*string*): The unique ID of the parent clip to extend.
+  * `continue_at` (*number*): Timestamp in seconds where extension begins (e.g. `120.5`).
+  * `prompt` (*string*): Additional lyrics or style guidance for the extended section.
+  * `tags` (*string*): Updated music tags for the new section.
+  * `title` (*string*): Title for the extended version.
+
+### 3. `suno_separate_stems`
+Triggers Premier stem isolation on an existing clip.
+* **Parameters:**
+  * `clip_id` (*string*): The clip ID to separate.
+* **Returns:** Clip metadata containing individual audio URLs for isolated **Vocals** and **Instrumental** tracks.
+
+### 4. `suno_get_clip`
+Retrieves live clip metadata, generation status, lyrics alignment, and audio download links.
+* **Parameters:**
+  * `clip_id` (*string*): Target clip ID.
+
+### 5. `suno_download_file`
+Downloads uncompressed WAV, MP3, or stem files safely to local storage.
+* **Parameters:**
+  * `audio_url` (*string*): Direct CDN audio URL.
+  * `filename` (*string*): Output filename (e.g. `"cyberpunk_master"`).
+  * `file_format` (*string*): `"wav"` (Default) or `"mp3"`.
+
+### 6. `suno_get_credits`
+Returns account information, plan type (`Free`, `Pro`, `Premier`), and remaining credit allowance.
+
+### 7. `suno_auth_status`
+Diagnostic tool that reports the health of the Clerk Token Rotation Engine and remaining JWT lifespan.
+
+---
+
+## 🛠️ Step-by-Step Installation Tutorial
 
 ### Prerequisites
-* **Python 3.10+** installed on your system.
-* **Google Chrome** or **Microsoft Edge** installed.
-* An active **Suno AI** account.
+1. **Python 3.10 or higher** installed.
+2. **Google Chrome** or **Microsoft Edge** browser installed.
+3. An active **Suno AI** account.
 
-### Step 1: Clone the Repository
+### 1. Clone & Set Up Directory
 ```bash
 git clone https://github.com/appeebaareecloudinfo-hash/Suno-Hmnn-MCP.git
 cd Suno-Hmnn-MCP
 ```
 
-### Step 2: Install Dependencies
+### 2. Install Dependencies
 ```bash
 pip install -r requirements.txt
 playwright install chromium
 ```
 
-### Step 3: Run the Automated Setup Wizard
-Launch the interactive login portal:
+### 3. Run the Automated Auth Portal
+Launch the frictionless login wizard:
 ```bash
 python setup.py
 ```
-1. A native browser window will launch to `https://app.suno.ai/`.
-2. Click **"Sign In"** on the website and log into your account.
-3. The wizard will automatically capture your session cookies, verify your account tier and remaining credits, and generate your `.env` configuration file securely.
+
+* **What happens:**
+  1. The setup wizard boots Google Chrome natively.
+  2. Log into your Suno account on the Chrome window.
+  3. As soon as you log in, the wizard captures your secure cookie bundle, verifies your account tier, fetches your remaining credit balance, and writes your `.env` configuration file automatically.
 
 ---
 
-## 🛠️ Integration Guide (Connecting to AI Clients)
+## 🔌 Client Integration Guide
 
-### 1. Hermes Agent
-Add the following to your `~/.hermes/config.yaml` or workspace `mcp.json`:
-
+### Hermes Agent
+Add to `~/.hermes/config.yaml` or workspace `mcp.json`:
 ```yaml
 mcp_servers:
   suno_premier:
@@ -100,9 +166,8 @@ mcp_servers:
     args: ["/absolute/path/to/Suno-Hmnn-MCP/server.py"]
 ```
 
-### 2. Antigravity IDE / Cursor / Windsurf
-Add to `.cursor/mcp.json` or your global MCP settings:
-
+### Antigravity IDE & Cursor
+Add to `.cursor/mcp.json`:
 ```json
 {
   "mcpServers": {
@@ -114,9 +179,8 @@ Add to `.cursor/mcp.json` or your global MCP settings:
 }
 ```
 
-### 3. Claude Desktop
+### Claude Desktop
 Add to `%APPDATA%\Claude\claude_desktop_config.json`:
-
 ```json
 {
   "mcpServers": {
@@ -128,45 +192,83 @@ Add to `%APPDATA%\Claude\claude_desktop_config.json`:
 }
 ```
 
----
-
-## 📖 MCP Tool Reference
-
-| Tool Name | Parameters | Description |
-| :--- | :--- | :--- |
-| `suno_generate` | `prompt`, `tags`, `title`, `make_instrumental`, `model_version`, `custom_lyrics` | Generate new tracks using `chirp-v4` or `chirp-v3-5`. Supports Custom Mode. |
-| `suno_extend` | `clip_id`, `continue_at`, `prompt`, `tags`, `title`, `model_version` | Extend an existing audio clip starting at timestamp `continue_at` (in seconds). |
-| `suno_separate_stems` | `clip_id` | Trigger Premier stem separation to isolate Vocals and Instrumental tracks. |
-| `suno_get_clip` | `clip_id` | Retrieve metadata, status, audio URLs, and stem states for a clip. |
-| `suno_download_file` | `audio_url`, `filename`, `file_format` | Download uncompressed 24-bit `.wav`, `.mp3`, or stem files to local storage. |
-| `suno_get_credits` | None | Fetch current account credit balance and plan details. |
-| `suno_auth_status` | None | Diagnostic check on token rotation engine health and token expiration countdown. |
-
----
-
-## ❓ Frequently Asked Questions (FAQ)
-
-#### Q: Will using this flag or ban my Suno account?
-**No.** `Suno-Hmnn-MCP` runs 100% locally on your home computer. It uses standard Chrome/Edge headers, human-paced polling intervals, and authentic Clerk Bearer JWT tokens. It behaves identically to you using the official web application in Chrome.
-
-#### Q: Do my AI platform account and Suno account need to use the same email?
-**No.** The architecture is completely decoupled. The MCP server acts as an air-gap on your local computer. Your AI agent (Claude, Hermes, Cursor) never sees your Suno password or email, and Suno never sees your AI platform accounts.
-
-#### Q: How does the self-healing auth work?
-Clerk JWT bearer tokens expire every few hours. When Suno returns an `HTTP 401 Unauthorized`, our internal middleware catches the error, uses the backup session cookie to silently request a fresh JWT from Clerk, updates its memory, and replays your generation task automatically.
-
-#### Q: Can I run this as an HTTP server instead of stdio?
-Yes! FastMCP supports HTTP transport out of the box. Run:
+### Standalone REST API Mode
+To run as a local HTTP server for custom web apps or webhooks:
 ```bash
 fastmcp run server.py:mcp --transport http --port 8000
 ```
-Your local server is now accessible via REST API at `http://localhost:8000`.
 
 ---
 
-## 📄 License & Community Welfare
+## 🎼 Complete Music Production Workflow Guide
 
-This project is licensed under the **MIT License** — free for personal, educational, and commercial use.
+### Prompting Strategy for v4 Models
+For best results with Suno `chirp-v4`, structure your prompts with explicit musical style tags:
 
-**Initiative Leader:** **George AK Neihsial**  
-*Building open, accessible, and user-centric software bridges for the global developer community.*
+```markdown
+[Genre: Cyberpunk Synthwave]
+[Tempo: 120 BPM]
+[Instruments: Analog Synths, Heavy Bass, Electronic Drums]
+[Vocals: Distorted Female Vocal, Reverb]
+
+[Verse 1]
+Midnight glowing neon lights,
+Wires humming through the night...
+
+[Chorus]
+Digital dreams in an analog soul,
+System override in full control!
+```
+
+---
+
+## 🎧 DAW Import & Stem Isolation
+
+Once `suno_separate_stems` completes, use `suno_download_file` to save your stems locally.
+
+**File Organization:**
+```
+C:\Users\YourName\hermy-hq\music-outputs\
+├── cyberpunk_master.wav       # Full Mix (24-bit WAV)
+├── cyberpunk_vocals.wav       # Isolated Vocals
+└── cyberpunk_instrumental.wav # Backing Track
+```
+
+**Importing into DAWs:**
+1. **Ableton Live / FL Studio / Reaper / Logic Pro**: Drag `cyberpunk_vocals.wav` and `cyberpunk_instrumental.wav` into separate audio tracks.
+2. Apply local EQ, compression, or sidechaining to mix Suno vocals with your custom instrument tracks.
+
+---
+
+## ❓ Comprehensive FAQ & Security Deep-Dive
+
+#### Q: Will this get my Suno account flagged or banned?
+**No.** `Suno-Hmnn-MCP` runs locally on your PC. It uses native Chrome/Edge headers, human-paced polling intervals, and authentic Clerk Bearer JWT tokens. It is indistinguishable from standard web browser traffic.
+
+#### Q: How does the Self-Healing Token Engine work?
+Clerk JWT bearer tokens expire periodically. When Suno returns an `HTTP 401 Unauthorized`, our internal middleware catches the response, uses the stored session cookie to silently request a new JWT from Clerk, updates its memory, and replays your generation request transparently.
+
+#### Q: Do my AI Agent and Suno accounts need the same email?
+**No.** The architecture is completely decoupled. The MCP server acts as an air-gap on your local machine.
+
+#### Q: Where are generated files stored?
+By default, all audio files are saved to `C:\Users\YourUsername\hermy-hq\music-outputs\`. You can customize this by setting `SUNO_OUTPUT_DIR` in `.env`.
+
+---
+
+## 🚨 Troubleshooting Guide
+
+| Symptom | Cause | Solution |
+| :--- | :--- | :--- |
+| `ModuleNotFoundError: No module named 'mcp'` | Packages installed in virtual environment | Run `python` using the full path to your virtual environment (e.g. `venv\Scripts\python.exe setup.py`). |
+| `Error fetching credits: HTTP 307` | Suno API endpoint redirect | Fixed in latest version by enabling `follow_redirects=True` in `httpx`. Run `git pull`. |
+| `Login timed out` | Chrome window closed before login | Re-run `python setup.py` and ensure you complete login in Chrome. |
+
+---
+
+## 📄 License & Authorship
+
+Licensed under the **MIT License** — free for personal, educational, and commercial use.
+
+**Lead Developer:** **George AK Neihsial**  
+*An initiative for the welfare of the open-source community.*
