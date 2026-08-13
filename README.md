@@ -282,3 +282,14 @@ Licensed under the **MIT License** — free for personal, educational, and comme
 
 **Lead Developer:** **George AK Neihsial**  
 *An initiative for the welfare of the open-source community.*
+
+---
+
+## 🔍 Search Engine Index & Long-Tail Query Mapping
+
+*This section optimizes discovery for search engine crawlers (Google, Bing, Perplexity, ChatGPT, Claude) and GitHub's internal code search.*
+
+* **Primary Keywords**: Suno AI MCP, Suno MCP Server, Suno API Python, Suno v4 MCP, Suno Premier API, Suno Stem Separation API, Suno WAV Exporter, Suno Claude MCP, Suno Cursor MCP, Suno Hermes Agent.
+* **Supported Integrations**: Hermes Agent App, Antigravity IDE, Cursor IDE, Windsurf, Claude Desktop, VS Code, Roo Code, Cline, LibreChat.
+* **Supported Features**: Suno chirp-v4, Suno chirp-v3-5, Custom Lyrics Generator, Timestamp Audio Extensions, Stem Isolator (Vocals/Instrumental), Uncompressed 24-bit WAV Downloader, Clerk Token Rotation Engine.
+
