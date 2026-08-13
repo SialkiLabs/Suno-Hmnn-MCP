@@ -10,11 +10,12 @@ from core.auth import auth_manager
 from core.client import SunoClient
 
 def print_header():
+    # Safe usage: os.name is a system constant ('nt' or 'posix'), no external input
     os.system('cls' if os.name == 'nt' else 'clear')
     print("=" * 60)
     print(" 🎵 SUNO-HMNN-MCP : Enterprise Studio OS Setup Wizard 🎵 ")
     print("=" * 60)
-    print("Launching secure browser for authentication...\n")
+    print("Launching your NATIVE browser to bypass Google security blocks...\n")
 
 def main():
     print_header()
@@ -23,13 +24,33 @@ def main():
     
     try:
         with sync_playwright() as p:
-            print("[+] Opening browser... Please log in to your Suno account.")
-            # Launch visible browser
-            browser = p.chromium.launch(headless=False)
-            context = browser.new_context(
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-            )
-            page = context.new_page()
+            print("[+] Booting native Chrome/Edge...")
+            user_data_dir = os.path.join(os.getcwd(), "suno_auth_profile")
+            
+            context = None
+            # Try to launch the user's ACTUAL installed browser (Edge is native on Windows, Chrome is common)
+            # This completely bypasses Google's "automated unsecure browser" block!
+            for channel in ["msedge", "chrome"]:
+                try:
+                    context = p.chromium.launch_persistent_context(
+                        user_data_dir=user_data_dir,
+                        headless=False,
+                        channel=channel,
+                        args=["--disable-blink-features=AutomationControlled", "--no-sandbox"],
+                        ignore_default_args=["--enable-automation"],
+                        viewport={"width": 1200, "height": 800}
+                    )
+                    print(f"[*] Successfully launched native {channel.upper()}!")
+                    break
+                except Exception:
+                    continue
+                    
+            if not context:
+                print("\n❌ Error: Could not launch native Microsoft Edge or Google Chrome.")
+                print("Please ensure one of them is installed.")
+                sys.exit(1)
+
+            page = context.pages[0] if context.pages else context.new_page()
             page.goto("https://app.suno.ai/")
             
             print("[*] Waiting for successful login... (Please log in normally. Do not close the browser!)")
@@ -50,17 +71,15 @@ def main():
                 
             if not session_cookie:
                 print("\n❌ Error: Login timed out or cookie not found.")
-                browser.close()
+                context.close()
                 sys.exit(1)
                 
             print("\n[+] Login detected! Capturing secure session...")
-            # Give it a tiny bit of time to settle just in case
             time.sleep(2)
-            browser.close()
+            context.close()
             
     except Exception as e:
         print(f"\n❌ Browser automation error: {e}")
-        print("Ensure you have run: playwright install chromium")
         sys.exit(1)
         
     # -----------------------------------------
