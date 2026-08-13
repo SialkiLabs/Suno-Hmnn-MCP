@@ -10,7 +10,7 @@ from core.auth import auth_manager
 from core.client import SunoClient
 
 def print_header():
-    # Safe usage: os.name is a system constant ('nt' or 'posix'), no external input
+    # Safe usage: os.name is a system constant
     os.system('cls' if os.name == 'nt' else 'clear')
     print("=" * 60)
     print(" 🎵 SUNO-HMNN-MCP : Enterprise Studio OS Setup Wizard 🎵 ")
@@ -20,7 +20,7 @@ def print_header():
 def main():
     print_header()
     
-    session_cookie = None
+    full_cookie_string = None
     
     try:
         with sync_playwright() as p:
@@ -28,8 +28,6 @@ def main():
             user_data_dir = os.path.join(os.getcwd(), "suno_auth_profile")
             
             context = None
-            # Try to launch the user's ACTUAL installed browser (Edge is native on Windows, Chrome is common)
-            # This completely bypasses Google's "automated unsecure browser" block!
             for channel in ["msedge", "chrome"]:
                 try:
                     context = p.chromium.launch_persistent_context(
@@ -47,7 +45,6 @@ def main():
                     
             if not context:
                 print("\n❌ Error: Could not launch native Microsoft Edge or Google Chrome.")
-                print("Please ensure one of them is installed.")
                 sys.exit(1)
 
             page = context.pages[0] if context.pages else context.new_page()
@@ -55,26 +52,30 @@ def main():
             
             print("[*] Waiting for successful login... (Please log in normally. Do not close the browser!)")
             
-            # Poll for the __session cookie
+            # Poll for the __session cookie and bundle ALL cookies together
             max_retries = 150 # 5 minutes max wait
             for _ in range(max_retries):
                 cookies = context.cookies()
-                for c in cookies:
-                    if c['name'] == '__session' and 'suno.ai' in c['domain']:
-                        session_cookie = f"__session={c['value']}"
-                        break
+                has_session = any(c['name'] == '__session' and ('suno.ai' in c['domain'] or 'suno.com' in c['domain']) for c in cookies)
                 
-                if session_cookie:
+                if has_session:
+                    # Construct full authentic cookie string containing ALL Suno cookies
+                    cookie_pairs = []
+                    for c in cookies:
+                        if 'suno.ai' in c['domain'] or 'suno.com' in c['domain']:
+                            cookie_pairs.append(f"{c['name']}={c['value']}")
+                    
+                    full_cookie_string = "; ".join(cookie_pairs)
                     break
                     
                 time.sleep(2)
                 
-            if not session_cookie:
-                print("\n❌ Error: Login timed out or cookie not found.")
+            if not full_cookie_string:
+                print("\n❌ Error: Login timed out or cookies not found.")
                 context.close()
                 sys.exit(1)
                 
-            print("\n[+] Login detected! Capturing secure session...")
+            print("\n[+] Login detected! Capturing complete secure cookie bundle...")
             time.sleep(2)
             context.close()
             
@@ -86,7 +87,7 @@ def main():
     # Verification & Tier Check
     # -----------------------------------------
     print("[+] Testing connection to Suno Authentication Servers...")
-    auth_manager.cookie = session_cookie
+    auth_manager.cookie = full_cookie_string
     
     success = auth_manager._refresh_token()
     if not success:
@@ -120,7 +121,7 @@ def main():
     # Securely save to .env
     env_path = Path(".env")
     with open(env_path, "w", encoding="utf-8") as f:
-        f.write(f'SUNO_COOKIE="{session_cookie}"\n')
+        f.write(f'SUNO_COOKIE="{full_cookie_string}"\n')
         f.write(f'SUNO_PLAN="{plan}"\n')
         
     print(f"\n🎉 Setup Complete! Configuration saved securely to {env_path.absolute()}")
