@@ -1,11 +1,13 @@
 import os
 import time
 import httpx
+from pathlib import Path
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 
-# Load the .env file automatically if it exists (created by setup.py)
-load_dotenv()
+# Load the .env file automatically from the project root directory
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 class ClerkAuthManager:
     """
@@ -40,7 +42,7 @@ class ClerkAuthManager:
         }
         
         try:
-            with httpx.Client(timeout=10.0) as client:
+            with httpx.Client(timeout=10.0, follow_redirects=True) as client:
                 resp = client.get(url, headers=headers)
                 
             if resp.status_code == 200:

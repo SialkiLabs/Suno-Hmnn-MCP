@@ -12,7 +12,7 @@ class SunoClient:
         """
         url = f"{self.app_url}{path}"
         
-        with httpx.Client(timeout=30.0) as client:
+        with httpx.Client(timeout=30.0, follow_redirects=True) as client:
             # First Attempt
             resp = client.request(method, url, headers=auth_manager.get_headers(), **kwargs)
             
