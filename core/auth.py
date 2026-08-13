@@ -2,6 +2,10 @@ import os
 import time
 import httpx
 from datetime import datetime, timezone
+from dotenv import load_dotenv
+
+# Load the .env file automatically if it exists (created by setup.py)
+load_dotenv()
 
 class ClerkAuthManager:
     """
