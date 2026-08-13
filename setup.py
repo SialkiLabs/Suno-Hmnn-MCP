@@ -15,78 +15,100 @@ def print_header():
     print("=" * 60)
     print(" 🎵 SUNO-HMNN-MCP : Enterprise Studio OS Setup Wizard 🎵 ")
     print("=" * 60)
-    print("Launching your NATIVE browser to bypass Google security blocks...\n")
+
+def capture_cookies(context):
+    cookies = context.cookies()
+    has_session = any(c['name'] == '__session' and ('suno.ai' in c['domain'] or 'suno.com' in c['domain']) for c in cookies)
+    if has_session:
+        cookie_pairs = [f"{c['name']}={c['value']}" for c in cookies if 'suno.ai' in c['domain'] or 'suno.com' in c['domain']]
+        return "; ".join(cookie_pairs)
+    return None
 
 def main():
     print_header()
-    
     full_cookie_string = None
     
-    try:
-        with sync_playwright() as p:
-            print("[+] Booting native Chrome/Edge...")
-            user_data_dir = os.path.join(os.getcwd(), "suno_auth_profile")
-            
+    # Check both potential profile locations
+    possible_profile_dirs = [
+        Path(__file__).parent / "suno_auth_profile",
+        Path(__file__).parent.parent / "suno_auth_profile"
+    ]
+
+    with sync_playwright() as p:
+        # Phase 1: Try silent background extraction first (Chrome first, then Edge)
+        print("[+] Checking existing browser sessions silently...")
+        for profile_dir in possible_profile_dirs:
+            if not profile_dir.exists():
+                continue
+            try:
+                for channel in ["chrome", "msedge"]:
+                    try:
+                        context = p.chromium.launch_persistent_context(
+                            user_data_dir=str(profile_dir),
+                            headless=True,
+                            channel=channel,
+                            args=["--disable-blink-features=AutomationControlled"]
+                        )
+                        page = context.pages[0] if context.pages else context.new_page()
+                        page.goto("https://app.suno.ai/", wait_until="domcontentloaded", timeout=10000)
+                        time.sleep(2)
+                        
+                        full_cookie_string = capture_cookies(context)
+                        context.close()
+                        
+                        if full_cookie_string:
+                            print(f"✅ Active session found in {channel.upper()} profile! Proceeding...")
+                            break
+                    except Exception:
+                        continue
+                if full_cookie_string:
+                    break
+            except Exception:
+                pass
+
+        # Phase 2: If no active session in profile, launch Chrome interactively for user to log in
+        if not full_cookie_string:
+            print("\n[+] Launching Chrome... Please complete your Suno login.")
+            target_dir = possible_profile_dirs[0]
             context = None
-            for channel in ["msedge", "chrome"]:
+            for channel in ["chrome", "msedge"]:
                 try:
                     context = p.chromium.launch_persistent_context(
-                        user_data_dir=user_data_dir,
+                        user_data_dir=str(target_dir),
                         headless=False,
                         channel=channel,
                         args=["--disable-blink-features=AutomationControlled", "--no-sandbox"],
                         ignore_default_args=["--enable-automation"],
                         viewport={"width": 1200, "height": 800}
                     )
-                    print(f"[*] Successfully launched native {channel.upper()}!")
+                    print(f"[*] Launched native {channel.upper()}!")
                     break
                 except Exception:
                     continue
-                    
+
             if not context:
-                print("\n❌ Error: Could not launch native Microsoft Edge or Google Chrome.")
+                print("\n❌ Error: Could not launch Chrome or Edge.")
                 sys.exit(1)
 
             page = context.pages[0] if context.pages else context.new_page()
             page.goto("https://app.suno.ai/")
             
-            print("[*] Waiting for successful login... (Please log in normally. Do not close the browser!)")
-            
-            # Poll for the __session cookie and bundle ALL cookies together
-            max_retries = 150 # 5 minutes max wait
-            for _ in range(max_retries):
-                cookies = context.cookies()
-                has_session = any(c['name'] == '__session' and ('suno.ai' in c['domain'] or 'suno.com' in c['domain']) for c in cookies)
-                
-                if has_session:
-                    # Construct full authentic cookie string containing ALL Suno cookies
-                    cookie_pairs = []
-                    for c in cookies:
-                        if 'suno.ai' in c['domain'] or 'suno.com' in c['domain']:
-                            cookie_pairs.append(f"{c['name']}={c['value']}")
-                    
-                    full_cookie_string = "; ".join(cookie_pairs)
+            print("[*] Waiting for login... (Take your time. Do not close the browser until it completes)")
+            # Wait up to 10 minutes (300 retries * 2 sec)
+            for _ in range(300):
+                full_cookie_string = capture_cookies(context)
+                if full_cookie_string:
                     break
-                    
                 time.sleep(2)
-                
-            if not full_cookie_string:
-                print("\n❌ Error: Login timed out or cookies not found.")
-                context.close()
-                sys.exit(1)
-                
-            print("\n[+] Login detected! Capturing complete secure cookie bundle...")
-            time.sleep(2)
+
             context.close()
-            
-    except Exception as e:
-        print(f"\n❌ Browser automation error: {e}")
+
+    if not full_cookie_string:
+        print("\n❌ Error: Login timed out or cookies not found.")
         sys.exit(1)
-        
-    # -----------------------------------------
+
     # Verification & Tier Check
-    # -----------------------------------------
-    print("[+] Testing connection to Suno Authentication Servers...")
+    print("\n[+] Testing connection to Suno Authentication Servers...")
     auth_manager.cookie = full_cookie_string
     
     success = auth_manager._refresh_token()
@@ -113,20 +135,14 @@ def main():
         print(f"🪙 Credits Left : {balance}")
         print("=" * 40)
         
-        if plan and ("Premier" in plan or "Pro" in plan):
-            print("[*] Tier Status: PREMIER capabilities UNLOCKED (WAV, Stems, Extensions).")
-        else:
-            print("[*] Tier Status: FREE tier detected. Advanced features will be restricted.")
-        
-    # Securely save to .env
-    env_path = Path(".env")
+    # Save to project root .env
+    env_path = Path(__file__).parent / ".env"
     with open(env_path, "w", encoding="utf-8") as f:
         f.write(f'SUNO_COOKIE="{full_cookie_string}"\n')
         f.write(f'SUNO_PLAN="{plan}"\n')
         
     print(f"\n🎉 Setup Complete! Configuration saved securely to {env_path.absolute()}")
-    print("\nYou can now plug this MCP server into Hermes Agent, Antigravity IDE, or Claude.")
-    print("Run `fastmcp run server.py:mcp` to start the engine.\n")
+    print("\nYou can now plug this MCP server into Hermes Agent, Antigravity IDE, or Claude.\n")
 
 if __name__ == "__main__":
     main()
