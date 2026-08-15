@@ -4,10 +4,8 @@ from pathlib import Path
 from datetime import datetime
 import platformdirs
 
-# Cross-platform data directory
-APP_NAME = "Suno-Hmnn-MCP"
-APP_AUTHOR = "SialkiLabs"
-DATA_DIR = Path(platformdirs.user_data_dir(APP_NAME, APP_AUTHOR))
+# Use local fallback for database to avoid permission issues
+DATA_DIR = Path(__file__).parent.parent / "music-outputs"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = DATA_DIR / "studio_os.db"
 

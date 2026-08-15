@@ -5,14 +5,8 @@ import platformdirs
 import aiofiles
 from .database import db
 
-# Cross-platform music directory default
-try:
-    default_music_dir = platformdirs.user_music_dir()
-except Exception:
-    default_music_dir = Path.home() / "Music"
-
-APP_NAME = "SunoStudio"
-OUTPUT_DIR = Path(os.getenv("SUNO_OUTPUT_DIR", Path(default_music_dir) / APP_NAME))
+# Force output to local dir to avoid isolated path permission errors
+OUTPUT_DIR = Path(__file__).parent.parent / "music-outputs"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 async def download_audio_file(audio_url: str, filename: str, file_format: str = "wav", clip_id: str = None) -> dict:
