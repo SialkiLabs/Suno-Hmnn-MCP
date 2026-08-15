@@ -28,76 +28,46 @@ def main():
     print_header()
     full_cookie_string = None
     
-    possible_profile_dirs = [
-        Path(__file__).parent / "suno_auth_profile",
-        Path(__file__).parent.parent / "suno_auth_profile"
-    ]
-
+    # 1. We will no longer try to silently hijack the user's default Chrome profile.
+    #    It causes locks and ghost processes if they have Chrome open.
+    #    Instead, we always use a safe, isolated local profile folder just for this MCP.
+    
+    isolated_profile_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".chrome_auth_profile")
+    os.makedirs(isolated_profile_dir, exist_ok=True)
+    
     with sync_playwright() as p:
-        print("[+] Checking existing browser sessions silently...")
-        for profile_dir in possible_profile_dirs:
-            if not profile_dir.exists():
-                continue
+        print("\n[+] Launching isolated Auth Window... Please complete your Suno login.")
+        context = None
+        for channel in ["chrome", "msedge"]:
             try:
-                for channel in ["chrome", "msedge"]:
-                    try:
-                        context = p.chromium.launch_persistent_context(
-                            user_data_dir=str(profile_dir),
-                            headless=True,
-                            channel=channel,
-                            args=["--disable-blink-features=AutomationControlled"]
-                        )
-                        page = context.pages[0] if context.pages else context.new_page()
-                        page.goto("https://app.suno.ai/", wait_until="domcontentloaded", timeout=10000)
-                        time.sleep(2)
-                        
-                        full_cookie_string = capture_cookies(context)
-                        context.close()
-                        
-                        if full_cookie_string:
-                            print(f"✅ Active session found in {channel.upper()} profile! Proceeding...")
-                            break
-                    except Exception:
-                        continue
-                if full_cookie_string:
-                    break
+                context = p.chromium.launch_persistent_context(
+                    user_data_dir=isolated_profile_dir,
+                    headless=False,
+                    channel=channel,
+                    args=["--disable-blink-features=AutomationControlled", "--no-sandbox"],
+                    ignore_default_args=["--enable-automation"],
+                    viewport={"width": 1200, "height": 800}
+                )
+                print(f"[*] Launched isolated {channel.upper()} window!")
+                break
             except Exception:
-                pass
+                continue
 
-        if not full_cookie_string:
-            print("\n[+] Launching Chrome... Please complete your Suno login.")
-            target_dir = possible_profile_dirs[0]
-            context = None
-            for channel in ["chrome", "msedge"]:
-                try:
-                    context = p.chromium.launch_persistent_context(
-                        user_data_dir=str(target_dir),
-                        headless=False,
-                        channel=channel,
-                        args=["--disable-blink-features=AutomationControlled", "--no-sandbox"],
-                        ignore_default_args=["--enable-automation"],
-                        viewport={"width": 1200, "height": 800}
-                    )
-                    print(f"[*] Launched native {channel.upper()}!")
-                    break
-                except Exception:
-                    continue
+        if not context:
+            print("\n❌ Error: Could not launch Chrome or Edge.")
+            sys.exit(1)
 
-            if not context:
-                print("\n❌ Error: Could not launch Chrome or Edge.")
-                sys.exit(1)
+        page = context.pages[0] if context.pages else context.new_page()
+        page.goto("https://app.suno.ai/")
+        
+        print("[*] Waiting for login...")
+        for _ in range(300):
+            full_cookie_string = capture_cookies(context)
+            if full_cookie_string:
+                break
+            time.sleep(2)
 
-            page = context.pages[0] if context.pages else context.new_page()
-            page.goto("https://app.suno.ai/")
-            
-            print("[*] Waiting for login...")
-            for _ in range(300):
-                full_cookie_string = capture_cookies(context)
-                if full_cookie_string:
-                    break
-                time.sleep(2)
-
-            context.close()
+        context.close()
 
     if not full_cookie_string:
         print("\n❌ Error: Login timed out or cookies not found.")
@@ -148,16 +118,21 @@ def main():
     print("\n[+] Testing Premier Client Access & Account Tier...")
     client = SunoClient()
     
+    import re
     # We force the auth manager to reload from the newly written .env
     from dotenv import load_dotenv
     # explicitly parse the file we just wrote instead of relying on os.environ overwriting bugs
     with open(env_path, "r", encoding="utf-8") as f:
-        for line in f:
-            if line.startswith("SUNO_COOKIE="):
-                auth_manager.cookie = line.split("=", 1)[1].strip().strip('"')
-            elif line.startswith("SUNO_SESSION_TOKEN="):
-                auth_manager.jwt_token = line.split("=", 1)[1].strip().strip('"')
-    
+        content = f.read()
+        
+    cookie_match = re.search(r'SUNO_COOKIE="(.*?)"', content)
+    if cookie_match:
+        auth_manager.cookie = cookie_match.group(1)
+        
+    jwt_match = re.search(r'SUNO_SESSION_TOKEN="(.*?)"', content)
+    if jwt_match:
+        auth_manager.jwt_token = jwt_match.group(1)
+        
     credits_info = asyncio.run(client.get_credits())
     
     if "error" in credits_info:
