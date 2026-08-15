@@ -16,13 +16,25 @@ class ClerkAuthManager:
     Uses the session cookie to dynamically refresh Clerk Bearer JWTs.
     """
     def __init__(self):
-        # Always reload on init to grab any live updates from wizard
+        # Always reload on init
         env_path = Path(__file__).parent.parent / ".env"
         load_dotenv(dotenv_path=env_path, override=True)
         
         self.cookie = os.getenv("SUNO_COOKIE", "")
         self.jwt_token = os.getenv("SUNO_SESSION_TOKEN", "")
         self.expires_at = 0.0
+        
+        # JSON Vault Override (Bulletproof parsing)
+        auth_file = Path(__file__).parent.parent / ".suno_auth.json"
+        if auth_file.exists():
+            import json
+            try:
+                with open(auth_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    self.cookie = data.get("SUNO_COOKIE", self.cookie)
+                    self.jwt_token = data.get("SUNO_SESSION_TOKEN", self.jwt_token)
+            except Exception as e:
+                print(f"[Auth] Error reading JSON vault: {e}")
         
         # We need this header to convince Clerk we are a real browser
         self.user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
