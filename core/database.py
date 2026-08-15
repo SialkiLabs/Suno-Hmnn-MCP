@@ -2,8 +2,14 @@ import sqlite3
 import os
 from pathlib import Path
 from datetime import datetime
+import platformdirs
 
-DB_PATH = Path(os.getenv("SUNO_OUTPUT_DIR", r"C:\Users\Getko\hermy-hq\music-outputs")) / "studio_os.db"
+# Cross-platform data directory
+APP_NAME = "Suno-Hmnn-MCP"
+APP_AUTHOR = "SialkiLabs"
+DATA_DIR = Path(platformdirs.user_data_dir(APP_NAME, APP_AUTHOR))
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+DB_PATH = DATA_DIR / "studio_os.db"
 
 class StudioDatabase:
     """Enterprise-grade local state manager for tracking all generations and files."""
@@ -48,6 +54,9 @@ class StudioDatabase:
             if audio_url and local_path:
                 cursor.execute('UPDATE tracks SET status=?, audio_url=?, local_path=? WHERE clip_id=?', 
                              (status, audio_url, local_path, clip_id))
+            elif audio_url:
+                cursor.execute('UPDATE tracks SET status=?, audio_url=? WHERE clip_id=?', 
+                             (status, audio_url, clip_id))
             else:
                 cursor.execute('UPDATE tracks SET status=? WHERE clip_id=?', (status, clip_id))
             conn.commit()
@@ -60,6 +69,14 @@ class StudioDatabase:
             cursor.execute('SELECT * FROM tracks WHERE clip_id=?', (clip_id,))
             row = cursor.fetchone()
             return dict(row) if row else {}
+            
+    def list_tracks(self, limit: int = 50) -> list:
+        """Lists recent tracks to recall library state."""
+        with sqlite3.connect(self.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM tracks ORDER BY created_at DESC LIMIT ?', (limit,))
+            return [dict(row) for row in cursor.fetchall()]
 
 # Singleton instance
 db = StudioDatabase()

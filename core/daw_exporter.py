@@ -1,14 +1,23 @@
 import os
 import httpx
 from pathlib import Path
+import platformdirs
+import aiofiles
+from .database import db
 
-# Base directory for all music exports
-OUTPUT_DIR = Path(os.getenv("SUNO_OUTPUT_DIR", r"C:\Users\Getko\hermy-hq\music-outputs"))
+# Cross-platform music directory default
+try:
+    default_music_dir = platformdirs.user_music_dir()
+except Exception:
+    default_music_dir = Path.home() / "Music"
+
+APP_NAME = "SunoStudio"
+OUTPUT_DIR = Path(os.getenv("SUNO_OUTPUT_DIR", Path(default_music_dir) / APP_NAME))
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-def download_audio_file(audio_url: str, filename: str, file_format: str = "wav") -> dict:
+async def download_audio_file(audio_url: str, filename: str, file_format: str = "wav", clip_id: str = None) -> dict:
     """
-    Downloads an audio file from a given URL and saves it to the output directory.
+    Downloads an audio file asynchronously in chunks to prevent memory spikes.
     Supports .mp3, .wav, and stems.
     """
     if not audio_url:
@@ -22,21 +31,28 @@ def download_audio_file(audio_url: str, filename: str, file_format: str = "wav")
     print(f"[Exporter] Downloading {file_format.upper()} to {save_path}...")
     
     try:
-        with httpx.Client(timeout=120.0) as client:
-            resp = client.get(audio_url)
-            
-            if resp.status_code == 200:
-                with open(save_path, "wb") as f:
-                    f.write(resp.content)
-                print(f"[Exporter] Successfully saved {filename} ({len(resp.content)} bytes).")
-                return {
-                    "status": "success",
-                    "file_path": str(save_path),
-                    "size_bytes": len(resp.content),
-                    "format": file_format
-                }
-            else:
-                return {"error": f"Failed to download audio. HTTP {resp.status_code}", "details": resp.text}
-                
+        async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
+            async with client.stream("GET", audio_url) as response:
+                if response.status_code == 200:
+                    async with aiofiles.open(save_path, "wb") as f:
+                        async for chunk in response.aiter_bytes(chunk_size=8192):
+                            await f.write(chunk)
+                            
+                    size = os.path.getsize(save_path)
+                    print(f"[Exporter] Successfully saved {filename} ({size} bytes).")
+                    
+                    # Update DB if clip_id is known
+                    if clip_id:
+                        db.update_track_status(clip_id, "downloaded", local_path=str(save_path))
+                        
+                    return {
+                        "status": "success",
+                        "file_path": str(save_path),
+                        "size_bytes": size,
+                        "format": file_format
+                    }
+                else:
+                    return {"error": f"Failed to download audio. HTTP {response.status_code}"}
+                    
     except Exception as e:
         return {"error": f"Network exception during download: {str(e)}"}
