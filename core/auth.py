@@ -16,6 +16,10 @@ class ClerkAuthManager:
     Uses the session cookie to dynamically refresh Clerk Bearer JWTs.
     """
     def __init__(self):
+        # Always reload on init to grab any live updates from wizard
+        env_path = Path(__file__).parent.parent / ".env"
+        load_dotenv(dotenv_path=env_path, override=True)
+        
         self.cookie = os.getenv("SUNO_COOKIE", "")
         self.jwt_token = os.getenv("SUNO_SESSION_TOKEN", "")
         self.expires_at = 0.0
@@ -81,6 +85,10 @@ class ClerkAuthManager:
 
     async def get_valid_token(self) -> str:
         """Returns a valid JWT, refreshing it automatically if expired."""
+        # If we have a JWT from the wizard, trust it on first boot (give it a 45 min lifespan)
+        if self.jwt_token and self.expires_at == 0.0:
+            self.expires_at = time.time() + (45 * 60)
+            
         if not self.jwt_token or time.time() >= self.expires_at:
             success = await self._refresh_token()
             if not success and not self.jwt_token:

@@ -118,13 +118,47 @@ def main():
     env_path = Path(__file__).parent / ".env"
     with open(env_path, "w", encoding="utf-8") as f:
         f.write(f'SUNO_COOKIE="{full_cookie_string}"\n')
+        # 1. Capture the raw JWT from the frontend API directly via the live browser context
+        # This gives us a guaranteed-fresh Bearer token without relying on the python backend
+        try:
+            page = browser.contexts[0].new_page()
+            # Navigate to the clerk client API to extract the token directly
+            page.goto("https://clerk.suno.com/v1/client?_clerk_js_version=4.73.4", wait_until="networkidle")
+            response_text = page.locator("body").inner_text()
+            
+            jwt_token = ""
+            import json
+            data = json.loads(response_text)
+            sessions = data.get("response", {}).get("sessions", [])
+            if sessions:
+                jwt_token = sessions[0].get("last_active_token", {}).get("jwt", "")
+                
+            if jwt_token:
+                f.write(f'SUNO_SESSION_TOKEN="{jwt_token}"\n')
+            page.close()
+        except Exception as e:
+            pass
+            
         f.write('SUNO_PLAN="Premier"\n')
+        
     print(f"🎉 Credentials saved securely to {env_path.absolute()}")
 
     # 3. Secondary Informational Check (Credits / Tier)
+    import asyncio
     print("\n[+] Testing Premier Client Access & Account Tier...")
     client = SunoClient()
-    credits_info = client.get_credits()
+    
+    # We force the auth manager to reload from the newly written .env
+    from dotenv import load_dotenv
+    # explicitly parse the file we just wrote instead of relying on os.environ overwriting bugs
+    with open(env_path, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.startswith("SUNO_COOKIE="):
+                auth_manager.cookie = line.split("=", 1)[1].strip().strip('"')
+            elif line.startswith("SUNO_SESSION_TOKEN="):
+                auth_manager.jwt_token = line.split("=", 1)[1].strip().strip('"')
+    
+    credits_info = asyncio.run(client.get_credits())
     
     if "error" in credits_info:
         print(f"⚠️ Note: Credit status check returned ({credits_info['error']}), but authentication is active.")
