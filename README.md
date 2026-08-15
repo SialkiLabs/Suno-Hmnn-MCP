@@ -61,7 +61,7 @@ graph TD;
 
 ## 🧰 Exhaustive Function & Tool Reference
 
-`Suno-Hmnn-MCP` exposes 8 production-grade tools directly to your AI Agents:
+`Suno-Hmnn-MCP` exposes 10 production-grade tools directly to your AI Agents:
 
 ### 1. `suno_generate`
 Generates original music tracks using custom lyrics or prompt descriptions. Wait mode built-in.
@@ -69,24 +69,29 @@ Generates original music tracks using custom lyrics or prompt descriptions. Wait
 
 ### 2. `suno_extend`
 Extends an existing track starting from an exact timestamp.
-* **Parameters:** `clip_id`, `continue_at`, `prompt`, `tags`, `title`, `model_version`, `wait_for_audio`.
 
-### 3. `suno_separate_stems`
+### 3. `suno_generate_from_midi` (NEW - Studio 2.0)
+Uploads a base64 encoded MIDI file to Suno Studio 2.0 and generates a full audio track based on those chords and melodies.
+
+### 4. `suno_generate_from_audio` (NEW)
+Uses a previously uploaded Audio Prompt ID as the base for a new track generation or style transfer.
+
+### 5. `suno_separate_stems`
 Triggers Premier stem isolation on an existing clip.
 
-### 4. `suno_get_clip`
+### 6. `suno_get_clip`
 Retrieves live clip metadata, generation status, lyrics alignment, and audio download links.
 
-### 5. `suno_download_file`
+### 7. `suno_download_file`
 Downloads uncompressed WAV, MP3, or stem files safely to local storage using memory-safe async chunking.
 
-### 6. `suno_list_local_library` (NEW)
+### 8. `suno_list_local_library`
 Allows the agent to read the local SQLite database and recall tracks generated in past sessions.
 
-### 7. `suno_get_credits`
-Returns account information, plan type, and remaining credit allowance.
+### 9. `suno_get_credits`
+Returns account information, plan type, and remaining credit allowance (including new WMG download limit tracking).
 
-### 8. `suno_auth_status`
+### 10. `suno_auth_status`
 Diagnostic tool that reports the health of the Clerk Token Rotation Engine.
 
 ---
@@ -197,4 +202,4 @@ Licensed under the **MIT License** — free for personal, educational, and comme
 
 * **Primary Keywords**: Suno AI MCP, Suno MCP Server, Suno API Python, Suno v4 MCP, Suno Premier API, Suno Stem Separation API, Suno WAV Exporter, Suno Claude MCP, Suno Cursor MCP, Suno Hermes Agent.
 * **Supported Integrations**: Hermes Agent App, Antigravity IDE, Cursor IDE, Windsurf, Claude Desktop, VS Code, Roo Code, Cline, LibreChat.
-* **Supported Features**: Suno chirp-v5-5-pro, Suno chirp-v5, Suno chirp-v4, Custom Lyrics Generator, Timestamp Audio Extensions, Stem Isolator (Vocals/Instrumental), Uncompressed 24-bit WAV Downloader, Clerk Token Rotation Engine, Asyncio MCP.
+* **Supported Features**: Suno chirp-v5-5-pro, Suno chirp-v5, Suno chirp-v4, Custom Lyrics Generator, Studio 2.0 MIDI Prompts, Audio Prompts, Timestamp Audio Extensions, Stem Isolator (Vocals/Instrumental), Uncompressed 24-bit WAV Downloader, Clerk Token Rotation Engine, Asyncio MCP.

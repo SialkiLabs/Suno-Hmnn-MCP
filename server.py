@@ -31,11 +31,12 @@ async def suno_generate(
     make_instrumental: bool = Field(False, description="Set to True for instrumental only"),
     model_version: ModelVersion = Field(ModelVersion.CHIRP_V5_5_PRO, description="Suno model version to use"),
     custom_lyrics: str = Field("", description="Custom lyrics (if provided, prompt becomes style)"),
-    wait_for_audio: bool = Field(True, description="Wait until generation completes and audio is ready")
+    wait_for_audio: bool = Field(True, description="Wait until generation completes and audio is ready"),
+    custom_model_id: str = Field(None, description="Optional ID for a custom trained model ('My Taste') - only valid with chirp-v5-5-pro")
 ) -> dict:
     """Generate new Suno music tracks (Custom Mode or Prompt Mode). Will wait for completion by default."""
     return await client.generate(
-        prompt, tags, title, make_instrumental, model_version.value, custom_lyrics, wait_for_audio
+        prompt, tags, title, make_instrumental, model_version.value, custom_lyrics, wait_for_audio, custom_model_id
     )
 
 @mcp.tool()
@@ -51,6 +52,32 @@ async def suno_extend(
     """Extend an existing clip starting at a specific timestamp."""
     return await client.extend(
         clip_id, continue_at, prompt, tags, title, model_version.value, wait_for_audio
+    )
+
+@mcp.tool()
+async def suno_generate_from_midi(
+    midi_base64: str = Field(..., description="Base64 encoded string of the .mid file"),
+    tags: str = Field("", description="Style tags"),
+    title: str = Field("", description="New title"),
+    model_version: ModelVersion = Field(ModelVersion.CHIRP_V5_5_PRO, description="Model version (must support Studio 2.0)"),
+    wait_for_audio: bool = Field(True, description="Wait until generation completes")
+) -> dict:
+    """Upload a MIDI file to Suno Studio 2.0 and generate a full audio track based on those chords/melodies."""
+    return await client.generate_from_midi(
+        midi_base64, tags, title, model_version.value, wait_for_audio
+    )
+
+@mcp.tool()
+async def suno_generate_from_audio(
+    audio_id: str = Field(..., description="ID of a previously uploaded audio clip to use as a prompt"),
+    tags: str = Field("", description="Style tags"),
+    title: str = Field("", description="New title"),
+    model_version: ModelVersion = Field(ModelVersion.CHIRP_V5_5_PRO, description="Model version"),
+    wait_for_audio: bool = Field(True, description="Wait until generation completes")
+) -> dict:
+    """Use an Audio Prompt (uploaded audio ID) as the base for a new track generation or style transfer."""
+    return await client.generate_from_audio(
+        audio_id, tags, title, model_version.value, wait_for_audio
     )
 
 @mcp.tool()

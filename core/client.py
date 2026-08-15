@@ -48,9 +48,10 @@ class SunoClient:
         return await self._execute_with_retry("GET", path)
 
     async def get_credits(self):
+        # We fetch the billing info which now includes the download limits (WMG partnership update)
         return await self._get("/api/billing/info/")
 
-    async def generate(self, prompt, tags, title, make_instrumental, model_version, custom_lyrics, wait_for_audio=True):
+    async def generate(self, prompt, tags, title, make_instrumental, model_version, custom_lyrics, wait_for_audio=True, custom_model_id=None):
         payload = {
             "mv": model_version,
             "prompt": custom_lyrics if custom_lyrics else prompt,
@@ -59,6 +60,11 @@ class SunoClient:
             "title": title,
             "make_instrumental": make_instrumental,
         }
+        
+        # Add the v5.5 Pro specific custom model ID if provided
+        if custom_model_id and model_version == "chirp-v5-5-pro":
+            payload["custom_model_id"] = custom_model_id
+            
         response = await self._post("/api/generate/v2/", payload)
         
         if "error" in response:
@@ -94,6 +100,64 @@ class SunoClient:
                 clip_id=clip.get("id"),
                 title=clip.get("title") or title,
                 prompt=prompt,
+                tags=tags,
+                model_version=model_version
+            )
+            
+        if wait_for_audio and clips:
+            clip_ids = [c["id"] for c in clips]
+            return await self._wait_for_clips(clip_ids)
+            
+        return response
+
+    async def generate_from_midi(self, midi_base64: str, tags: str, title: str, model_version: str, wait_for_audio=True):
+        """Submit a MIDI file (base64 encoded) to Suno Studio 2.0 to generate a track."""
+        payload = {
+            "mv": model_version,
+            "midi_data": midi_base64,
+            "tags": tags,
+            "title": title
+        }
+        response = await self._post("/api/studio/v2/generate_from_midi/", payload)
+        
+        if "error" in response:
+            return response
+            
+        clips = response.get("clips", [])
+        for clip in clips:
+            db.log_generation(
+                clip_id=clip.get("id"),
+                title=clip.get("title") or title,
+                prompt="[MIDI GENERATION]",
+                tags=tags,
+                model_version=model_version
+            )
+            
+        if wait_for_audio and clips:
+            clip_ids = [c["id"] for c in clips]
+            return await self._wait_for_clips(clip_ids)
+            
+        return response
+
+    async def generate_from_audio(self, audio_id: str, tags: str, title: str, model_version: str, wait_for_audio=True):
+        """Submit an uploaded audio file ID to use as an Audio Prompt."""
+        payload = {
+            "mv": model_version,
+            "audio_prompt_id": audio_id,
+            "tags": tags,
+            "title": title
+        }
+        response = await self._post("/api/generate/v2/", payload)
+        
+        if "error" in response:
+            return response
+            
+        clips = response.get("clips", [])
+        for clip in clips:
+            db.log_generation(
+                clip_id=clip.get("id"),
+                title=clip.get("title") or title,
+                prompt="[AUDIO PROMPT]",
                 tags=tags,
                 model_version=model_version
             )
