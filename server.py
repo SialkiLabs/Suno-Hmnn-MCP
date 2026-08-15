@@ -11,6 +11,9 @@ client = SunoClient()
 
 # Enums for strong typing
 class ModelVersion(str, Enum):
+    CHIRP_V5_5_PRO = "chirp-v5-5-pro"
+    CHIRP_V5_5 = "chirp-v5-5"
+    CHIRP_V5 = "chirp-v5"
     CHIRP_V4 = "chirp-v4"
     CHIRP_V3_5 = "chirp-v3-5"
     CHIRP_V3 = "chirp-v3"
@@ -26,7 +29,7 @@ async def suno_generate(
     tags: str = Field("", description="Style tags (e.g. 'pop, upbeat, female vocal')", max_length=120),
     title: str = Field("", description="Title of the song"),
     make_instrumental: bool = Field(False, description="Set to True for instrumental only"),
-    model_version: ModelVersion = Field(ModelVersion.CHIRP_V4, description="Suno model version to use"),
+    model_version: ModelVersion = Field(ModelVersion.CHIRP_V5_5_PRO, description="Suno model version to use"),
     custom_lyrics: str = Field("", description="Custom lyrics (if provided, prompt becomes style)"),
     wait_for_audio: bool = Field(True, description="Wait until generation completes and audio is ready")
 ) -> dict:
@@ -42,7 +45,7 @@ async def suno_extend(
     prompt: str = Field("", description="Custom lyrics to continue with"),
     tags: str = Field("", description="Style tags"),
     title: str = Field("", description="New title"),
-    model_version: ModelVersion = Field(ModelVersion.CHIRP_V4, description="Model version"),
+    model_version: ModelVersion = Field(ModelVersion.CHIRP_V5_5_PRO, description="Model version"),
     wait_for_audio: bool = Field(True, description="Wait until generation completes")
 ) -> dict:
     """Extend an existing clip starting at a specific timestamp."""

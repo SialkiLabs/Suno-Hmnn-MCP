@@ -8,11 +8,11 @@
 [![FastMCP Engine](https://img.shields.io/badge/FastMCP-Supported-000000.svg?style=for-the-badge)](https://gofastmcp.com)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](http://makeapullrequest.com)
 
-**The ultimate production-grade Suno AI MCP server (v4/v3.5) for Hermes Agent, Antigravity IDE, Cursor, Claude Desktop, and VS Code.**
+**The ultimate production-grade Suno AI MCP server (v5.5 Pro/v5/v4) for Hermes Agent, Antigravity IDE, Cursor, Claude Desktop, and VS Code.**
 
 </div>
 
-> **Suno-Hmnn-MCP** is an enterprise-grade, local, self-healing Model Context Protocol (MCP) framework that bridges **Suno AI (v4/v3.5)** directly into your favorite AI Agents and local REST API services. 
+> **Suno-Hmnn-MCP** is an enterprise-grade, local, self-healing Model Context Protocol (MCP) framework that bridges **Suno AI (v5.5 Pro/v5/v4)** directly into your favorite AI Agents and local REST API services. 
 
 ---
 
@@ -65,7 +65,7 @@ graph TD;
 
 ### 1. `suno_generate`
 Generates original music tracks using custom lyrics or prompt descriptions. Wait mode built-in.
-* **Parameters:** `prompt` (Max 3000c), `tags` (Max 120c), `title`, `make_instrumental`, `model_version` (`chirp-v4` or `chirp-v3-5`), `custom_lyrics`, `wait_for_audio`.
+* **Parameters:** `prompt` (Max 3000c), `tags` (Max 120c), `title`, `make_instrumental`, `model_version` (`chirp-v5-5-pro`, `chirp-v5`, `chirp-v4`), `custom_lyrics`, `wait_for_audio`.
 
 ### 2. `suno_extend`
 Extends an existing track starting from an exact timestamp.
@@ -197,4 +197,4 @@ Licensed under the **MIT License** — free for personal, educational, and comme
 
 * **Primary Keywords**: Suno AI MCP, Suno MCP Server, Suno API Python, Suno v4 MCP, Suno Premier API, Suno Stem Separation API, Suno WAV Exporter, Suno Claude MCP, Suno Cursor MCP, Suno Hermes Agent.
 * **Supported Integrations**: Hermes Agent App, Antigravity IDE, Cursor IDE, Windsurf, Claude Desktop, VS Code, Roo Code, Cline, LibreChat.
-* **Supported Features**: Suno chirp-v4, Suno chirp-v3-5, Custom Lyrics Generator, Timestamp Audio Extensions, Stem Isolator (Vocals/Instrumental), Uncompressed 24-bit WAV Downloader, Clerk Token Rotation Engine, Asyncio MCP.
+* **Supported Features**: Suno chirp-v5-5-pro, Suno chirp-v5, Suno chirp-v4, Custom Lyrics Generator, Timestamp Audio Extensions, Stem Isolator (Vocals/Instrumental), Uncompressed 24-bit WAV Downloader, Clerk Token Rotation Engine, Asyncio MCP.
