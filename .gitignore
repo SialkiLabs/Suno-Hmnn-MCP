@@ -1,9 +1,14 @@
 __pycache__/
 *.pyc
 .env
+.env.*
+!.env.example
 .venv
 env/
 venv/
 suno_auth_profile/
+.suno_auth.json
+*suno_auth*.json
+cookies.txt
 music-outputs/
 *.db
