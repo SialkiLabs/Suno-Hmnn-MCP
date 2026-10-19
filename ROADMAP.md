@@ -1,43 +1,17 @@
-# Sialki Labs Master Product Roadmap 🗺️
+# Suno-Hmnn-MCP development priorities
 
-**Founder & Chief Product Architect:** George AK Neihsial  
-**Organization:** Sialki Labs (`SialkiLabs`)  
-**Project:** Suno-Hmnn-MCP
+This document concerns the Suno-Hmnn-MCP project, not the full Sialki Labs business or InMyTongue research program.
 
----
+## Core workflows
 
-## 🎯 Vision Statement
-To build the world's most reliable, self-healing, open-core AI media infrastructure — bridging cutting-edge generative audio, video, and creative models into local AI agents and enterprise production environments.
+Potential work should prioritize reproducible authentication failures, clear error handling, reliable status reporting, download behavior, and local library integrity. Compatibility must be tested against the service and client involved.
 
----
+## Contributor experience
 
-## 📍 Phased Execution Roadmap
+Useful contributions include setup troubleshooting, tool examples, regression tests, dependency review, and documentation grounded in actual behavior.
 
-### Phase 1: Local Core & Self-Healing Auth (CURRENT)
-- [x] FastMCP Server entrypoint (`server.py`)
-- [x] Dual-Layer Clerk Token Rotation Engine (`core/auth.py`)
-- [x] Self-Healing 401 Request Replay Middleware (`core/client.py`)
-- [x] Automated Playwright Browser Setup Wizard (`wizard.py`)
-- [x] Uncompressed 24-bit WAV & Premier Stem Exporter (`core/daw_exporter.py`)
-- [x] Local SQLite State Tracker (`core/database.py`)
-- [x] Integration support for Hermes Agent, Antigravity IDE, Cursor, and Claude Desktop.
+## Integration proposals
 
-### Phase 2: Community & Developer Scaling (Q3 2026)
-- [ ] Active Contributor Onboarding & Maintainer Badge System.
-- [ ] GitHub Sponsors & Issue Bounty Integration.
-- [ ] Non-dilutive Grant Applications (Microsoft Founders Hub, NVIDIA Inception, Google Cloud for Startups).
-- [ ] Multi-account session load balancer (auto-switching across multiple accounts).
-- [ ] Standalone REST API & Webhook Dispatcher mode.
+REST access, webhooks, account/session management, and direct creative-tool integrations require separate design and security review before implementation. Hosted token storage and native audio plugins are possible research directions, not available services or promised releases.
 
-### Phase 3: Sialki Enterprise Cloud & DAW VST3 Plugin (Q4 2026)
-- [ ] **Sialki Cloud Session Vault**: Hosted, multi-tenant token vault removing local setup completely for enterprise users.
-- [ ] **DAW VST3 / AU Plugin**: Native C++ plugin for Ableton Live, FL Studio, Reaper, and Logic Pro to generate and stream Suno stems directly inside your timeline.
-- [ ] **Commercial License & SLA**: Enterprise subscription model for studios, media agencies, and broadcast production teams.
-
----
-
-## 💰 Funding & Investment Strategy
-
-1. **Non-Dilutive Capital (Grants)**: $10,000 – $150,000 in AI compute credits and grants.
-2. **Community Bounties**: GitHub Sponsors & Gitcoin Grants.
-3. **Seed & Angel Investment**: Target open-source funds (Open Core Ventures, OSS Capital, Y Combinator).
+There are no delivery dates, grant awards, funding commitments, or commercial support guarantees established by this document. Discuss proposed work through [Issues](https://github.com/SialkiLabs/Suno-Hmnn-MCP/issues) or contact [george.ak@inmytongue.org](mailto:george.ak@inmytongue.org).

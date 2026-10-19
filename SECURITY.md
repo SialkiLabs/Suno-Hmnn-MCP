@@ -1,32 +1,21 @@
-# Security Policy & Vulnerability Disclosure
+# Security policy
 
-## 🛡️ Our Security Commitment
-**Sialki Labs** takes software security, data privacy, and user protection seriously. 
+Suno-Hmnn-MCP handles authentication material and makes requests to remote services. Local execution does not remove risks involving credentials, dependencies, file access, or service accounts.
 
-Because **Suno-Hmnn-MCP** operates locally on your machine (`localhost`) and interacts directly with authentication tokens, we maintain an uncompromising standard of code transparency and security hygiene.
+## Report privately
 
----
+Send potential vulnerabilities to **george.ak@inmytongue.org**. Do not publish exploit details, live credentials, or sensitive account information in an issue.
 
-## 🔒 Security Architecture Highlights
-* **Zero Outbound Telemetry**: No user data, prompt history, session tokens, or system analytics are ever transmitted to external tracking servers.
-* **User-Space Execution**: All setup scripts (`wizard.py`) and FastMCP server entrypoints (`server.py`) run strictly within standard user permissions and **never request root/administrator privileges**.
-* **Credential Vaulting**: Local credentials are stored exclusively in `.env` (which is excluded from Git tracking via `.gitignore`).
+Include the affected file or tool, impact, safe reproduction steps, and the tested environment. Redact cookies and tokens. Provide the relevant commit identifier when possible so the implementation can be located precisely.
 
----
+Reports will be reviewed by the maintainers. This policy does not promise a response or resolution deadline, an audit certification, or a paid bounty.
 
-## 🐛 Reporting a Vulnerability
+## Protect authentication material
 
-If you discover a potential security vulnerability within **Suno-Hmnn-MCP**, please do **NOT** open a public GitHub issue.
+- Keep `.env` and browser session material out of Git, screenshots, and logs.
+- Restrict local file access. A plaintext environment file is not an encrypted credential vault.
+- Run with only the operating-system permissions the task requires.
+- Inspect dependencies and tool permissions before enabling automated actions.
+- Revoke or rotate exposed credentials using the service's account controls.
 
-Instead, please report the vulnerability directly to the Lead Architect:
-
-* **Email**: `daplewjioneihsial@gmail.com`
-* **Lead Architect**: George AK Neihsial
-* **Organization**: Sialki Labs (`github.com/SialkiLabs`)
-
-### What to Include in Your Report:
-1. Description of the vulnerability and its potential impact.
-2. Step-by-step reproduction steps or proof-of-concept script.
-3. Suggested fix or mitigation, if available.
-
-We pledge to acknowledge your report within **24 hours** and provide an estimated resolution timeline within **48 hours**.
+Security-sensitive changes should include tests or clear reproduction and verification instructions. The software license does not guarantee account safety or service availability.
