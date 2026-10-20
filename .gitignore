@@ -12,3 +12,12 @@ suno_auth_profile/
 cookies.txt
 music-outputs/
 *.db
+
+.chrome_auth_profile/
+.suno-credentials-*
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/

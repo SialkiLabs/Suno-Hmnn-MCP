@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "suno-hmnn-mcp"
 version = "1.0.0"
-description = "Production-grade, self-healing FastMCP server bridging Suno Premier to Hermes, Antigravity IDE, Cursor, and Claude."
+description = "Local MCP tools for Suno music workflows and library records."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -15,7 +15,10 @@ authors = [
 keywords = ["suno-ai", "mcp", "fastmcp", "ai-music", "hermes-agent", "cursor-ide", "claude-desktop"]
 dependencies = [
     "httpx>=0.28.0",
-    "mcp>=1.0.0",
+    "mcp>=1.2.0,<2",
+    "pydantic>=2.7.0",
+    "aiofiles>=23.2.1",
+    "platformdirs>=4.2.0",
     "python-dotenv>=1.0.0",
     "playwright>=1.40.0"
 ]
@@ -23,3 +26,21 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/SialkiLabs/Suno-Hmnn-MCP"
 Repository = "https://github.com/SialkiLabs/Suno-Hmnn-MCP"
+
+[project.optional-dependencies]
+test = ["pytest>=8", "pytest-asyncio>=0.23", "pytest-cov>=5"]
+
+[project.scripts]
+suno-hmnn-mcp = "server:mcp.run"
+suno-hmnn-setup = "wizard:main"
+
+[tool.setuptools]
+py-modules = ["server", "wizard"]
+
+[tool.setuptools.packages.find]
+include = ["core", "core.*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-ra"

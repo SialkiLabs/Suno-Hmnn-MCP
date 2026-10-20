@@ -1,149 +1,123 @@
+"""Consumer-session authentication. This is not Suno Platform API access."""
+
+import asyncio
+import base64
+import json
+import logging
 import os
 import time
-import httpx
 from pathlib import Path
-from datetime import datetime, timezone
-from dotenv import load_dotenv
-import asyncio
 
-# Load the .env file automatically from the project root directory
-env_path = Path(__file__).parent.parent / ".env"
-load_dotenv(dotenv_path=env_path, override=True)
+import httpx
+from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
+# Explicit process environment takes precedence over the local credential file.
+load_dotenv(Path(__file__).resolve().parent.parent / ".env", override=False)
+
+
+def token_expiry(token: str) -> float:
+    """Read exp only to schedule refresh, not to authenticate or verify a JWT."""
+    if not isinstance(token, str):
+        return 0.0
+    try:
+        payload = token.split(".")[1]
+        data = json.loads(base64.urlsafe_b64decode(payload + "=" * (-len(payload) % 4)))
+        expiry = float(data["exp"])
+        return expiry if expiry > 0 else 0.0
+    except (IndexError, KeyError, ValueError, TypeError, UnicodeError):
+        return 0.0
+
 
 class ClerkAuthManager:
-    """
-    Dual-layer authentication manager for Suno.
-    Uses the session cookie to dynamically refresh Clerk Bearer JWTs.
-    """
     def __init__(self):
-        # Always reload on init
-        env_path = Path(__file__).parent.parent / ".env"
-        load_dotenv(dotenv_path=env_path, override=True)
-        
         self.cookie = os.getenv("SUNO_COOKIE", "")
         self.jwt_token = os.getenv("SUNO_SESSION_TOKEN", "")
-        self.expires_at = 0.0
-        
-        # JSON Vault Override (Bulletproof parsing)
-        auth_file = Path(__file__).parent.parent / ".suno_auth.json"
-        if auth_file.exists():
-            import json
-            try:
-                with open(auth_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    self.cookie = data.get("SUNO_COOKIE", self.cookie)
-                    self.jwt_token = data.get("SUNO_SESSION_TOKEN", self.jwt_token)
-            except Exception as e:
-                print(f"[Auth] Error reading JSON vault: {e}")
-        
-        # We need this header to convince Clerk we are a real browser
-        self.user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+        # An unknown expiry must not be replaced with an invented token lifetime.
+        self.expires_at = token_expiry(self.jwt_token)
         self._lock = asyncio.Lock()
-
-    async def _refresh_token(self) -> bool:
-        """
-        Hits the Clerk frontend API to exchange the session cookie for a fresh JWT.
-        """
-        async with self._lock:
-            # Check if someone else refreshed it while we were waiting for the lock
-            if time.time() < self.expires_at and self.jwt_token:
-                return True
-                
-            if not self.cookie:
-                print("[Auth] No SUNO_COOKIE provided. Cannot refresh token.")
-                return False
-                
-            print(f"[{datetime.now().strftime('%H:%M:%S')}] [Auth] Refreshing Clerk JWT via Session Cookie...")
-            
-            url = "https://clerk.suno.com/v1/client?_clerk_js_version=4.73.4"
-            
-            # Sanitize cookie to prevent Illegal header value exceptions from HTTPX
-            sanitized = "".join(self.cookie.splitlines())
-            import urllib.parse
-            sanitized = urllib.parse.unquote(sanitized)
-            sanitized = sanitized.encode('ascii', 'ignore').decode('ascii')
-            # Additional safety: strip any characters outside standard printable ascii
-            sanitized = "".join(c for c in sanitized if 32 <= ord(c) < 127)
-            
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-                "Accept": "*/*",
-                "Origin": "https://app.suno.ai",
-                "Referer": "https://app.suno.ai/"
-            }
-            
+        auth_file = Path(__file__).resolve().parent.parent / ".suno_auth.json"
+        if auth_file.exists() and not self.cookie:
             try:
-                async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
-                    resp = await client.get(url, headers=headers)
-                    
-                if resp.status_code == 200:
-                    data = resp.json()
-                    
-                    # Dig into Clerk's standard JSON response to find the active session JWT
-                    sessions = data.get("response", {}).get("sessions", [])
-                    if sessions:
-                        active_session = sessions[0]
-                        new_jwt = active_session.get("last_active_token", {}).get("jwt")
-                        
-                        if new_jwt:
-                            self.jwt_token = new_jwt
-                            # Clerk tokens usually last ~1 min to a few hours depending on their config.
-                            # We force a refresh every 45 minutes to be safe.
-                            self.expires_at = time.time() + (45 * 60)
-                            print("[Auth] Successfully refreshed JWT.")
-                            return True
-                            
-                    print("[Auth] Failed to parse JWT from Clerk response.")
+                data = json.loads(auth_file.read_text(encoding="utf-8"))
+                self.cookie = data.get("SUNO_COOKIE", "")
+                if not self.jwt_token:
+                    self.jwt_token = data.get("SUNO_SESSION_TOKEN", "")
+                    self.expires_at = token_expiry(self.jwt_token)
+            except (OSError, ValueError, TypeError):
+                logger.warning("Could not load local authentication file")
+
+    async def _refresh_token(
+        self, force: bool = False, rejected_token: str | None = None
+    ) -> bool:
+        async with self._lock:
+            valid = bool(self.jwt_token) and time.time() + 10 < self.expires_at
+            # A concurrent request may already have replaced the rejected token.
+            if valid and (
+                not force
+                or (rejected_token is not None and self.jwt_token != rejected_token)
+            ):
+                return True
+            if force:
+                self.jwt_token = ""
+                self.expires_at = 0.0
+            if not isinstance(self.cookie, str) or not self.cookie:
+                return False
+            # Reject malformed credentials instead of silently mutating them.
+            if any(ord(c) < 32 or ord(c) > 126 for c in self.cookie):
+                logger.warning("Session cookie has invalid header characters")
+                return False
+            headers = {
+                "Cookie": self.cookie,
+                "Accept": "application/json",
+                "Origin": "https://suno.com",
+                "Referer": "https://suno.com/",
+            }
+            try:
+                async with httpx.AsyncClient(
+                    timeout=10.0, follow_redirects=False
+                ) as client:
+                    response = await client.get(
+                        "https://clerk.suno.com/v1/client?_clerk_js_version=4.73.4",
+                        headers=headers,
+                    )
+                if response.status_code != 200:
+                    logger.warning(
+                        "Session refresh rejected (HTTP %s)", response.status_code
+                    )
                     return False
-                else:
-                    print(f"[Auth] Clerk rejected cookie. HTTP {resp.status_code}: {resp.text}")
-                    return False
-                    
-            except Exception as e:
-                print(f"[Auth] Network error during token refresh: {e}")
+                sessions = response.json().get("response", {}).get("sessions", [])
+                for session in sessions:
+                    token = session.get("last_active_token", {}).get("jwt", "")
+                    expiry = token_expiry(token)
+                    if token and expiry > time.time() + 10:
+                        self.jwt_token, self.expires_at = token, expiry
+                        return True
+                return False
+            except (httpx.HTTPError, ValueError, TypeError, AttributeError):
+                logger.warning(
+                    "Session refresh failed; credentials and response body withheld"
+                )
                 return False
 
     async def get_valid_token(self) -> str:
-        """Returns a valid JWT, refreshing it automatically if expired."""
-        # If we have a JWT from the wizard, trust it on first boot (give it a 45 min lifespan)
-        if self.jwt_token and self.expires_at == 0.0:
-            self.expires_at = time.time() + (45 * 60)
-            
-        if not self.jwt_token or time.time() >= self.expires_at:
-            # Let's add a silent bypass for test environments if we want to run blind tests
-            if os.getenv("BYPASS_AUTH_FOR_TESTS"):
-                return "test_jwt_bypass"
-                
-            success = await self._refresh_token()
-            if not success and not self.jwt_token:
-                raise RuntimeError("Failed to obtain a valid Suno authentication token.")
-        
+        if not self.jwt_token or time.time() + 10 >= self.expires_at:
+            if not await self._refresh_token():
+                raise RuntimeError(
+                    "Authentication expired or unavailable. Run the setup wizard again."
+                )
         return self.jwt_token
 
     async def get_headers(self) -> dict:
-        """Returns the headers required for hitting Suno's internal API."""
-        token = await self.get_valid_token()
-        sanitized = "".join(self.cookie.splitlines())
-        
-        # For development/testing bypass
-        if os.getenv("BYPASS_AUTH_FOR_TESTS"):
-            return {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-                "Content-Type": "application/json",
-                "Accept": "*/*",
-                "Cookie": "sessionid=test_bypass_cookie;",
-                "Authorization": "Bearer test_jwt_bypass"
-            }
-        
         return {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
             "Content-Type": "application/json",
-            "Accept": "*/*",
-            "Authorization": f"Bearer {token}"
+            "Accept": "application/json",
+            "Authorization": f"Bearer {await self.get_valid_token()}",
         }
 
-# Global singleton instance for the app
+
 auth_manager = ClerkAuthManager()
+
 
 async def get_headers() -> dict:
     return await auth_manager.get_headers()
