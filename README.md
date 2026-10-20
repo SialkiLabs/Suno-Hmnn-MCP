@@ -58,7 +58,13 @@ Clients use different configuration formats. Consult the client's documentation 
 
 The implementation uses asynchronous HTTP requests, authentication handling, streamed file downloads, validated tool inputs, and local SQLite state. See `server.py` and `core/` for the implementation rather than treating this overview as a performance or security certification.
 
-Audio files and the library database use an OS-specific Music directory, such as `~/Music/SunoStudio`. `SUNO_OUTPUT_DIR` controls the output directory.
+Audio files and the library database use an OS-specific Music directory, such as `~/Music/SunoStudio`. `SUNO_OUTPUT_DIR` controls the output directory; `SUNO_DATABASE_PATH` can separately select the database file.
+
+Downloads accept HTTPS URLs on explicitly approved Suno CDN hosts and save new files only. They are limited to 250 MiB, check basic MP3/WAV signatures, and do not convert formats. Other CDN hosts require a reviewed code change. A signature check is not a full audio-decoding validation.
+
+Polling distinguishes completed audio, failures, previews, and timeouts. A network failure during a generation request can leave acceptance unknown. Do not automatically repeat that request.
+
+The existing consumer-session endpoints and model identifiers have not been verified against a live account. This repository does not implement Suno Platform API access. MIDI and audio-input tools are request implementations, not confirmation that the service accepts those operations.
 
 ## Account access and security
 
@@ -78,3 +84,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development and review expectations a
 
 **Created by:** George AK Neihsial, Sialki Labs.  
 **Project and business enquiries:** [george.ak@inmytongue.org](mailto:george.ak@inmytongue.org)
+
+## Offline development checks
+
+```bash
+python -m pip install -e ".[test]"
+python -m pytest
+```
+
+Tests use fake HTTP responses and temporary local storage. They do not require Suno credentials or submit generations. `test_gen.py` is a manual live script, not part of the automated suite; running it can spend credits.
+
+Authentication cookies and tokens remain plaintext local credentials. The setup wizard verifies session access before saving them and does not prove that a generation operation is authorized or available. Live validation requires separate approval and an account with the appropriate permissions.

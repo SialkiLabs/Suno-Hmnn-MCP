@@ -52,4 +52,5 @@ async def main():
     else:
         print("❌ Audio URL not found in response.")
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
